@@ -1,125 +1,151 @@
-import { getMealIcon, getMealLabel } from '../utils/helpers';
+import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
+import { MEALS } from '../data/foodDatabase';
+import { calcDayTotals, calcMealTotals, calcPercentage, formatDateFull, getTodayKey } from '../utils/helpers';
+import WaterTracker from './WaterTracker';
 
-function MacroRing({ value, max, color, label, unit = 'г' }) {
-  const pct = Math.min((value / max) * 100, 100);
-  const r = 30;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
+export default function Dashboard({ entries, goals, water, setWater, removeEntry }) {
+  const [openMeals, setOpenMeals] = useState({ breakfast: true, lunch: true, dinner: true, snack: true });
 
-  return (
-    <div className="macro-ring-wrap">
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
-        <circle
-          cx="40" cy="40" r={r} fill="none"
-          stroke={color} strokeWidth="8"
-          strokeDasharray={circ} strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 40 40)"
-          style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-        />
-        <text x="40" y="44" textAnchor="middle" fill="white" fontSize="12" fontWeight="600">
-          {value}{unit}
-        </text>
-      </svg>
-      <span className="macro-ring-label">{label}</span>
-    </div>
-  );
-}
+  const todayKey = getTodayKey();
+  const todayEntries = entries[todayKey] || [];
+  const totals = calcDayTotals(todayEntries);
+  const remaining = Math.max(0, goals.calories - totals.calories);
+  const calPct = calcPercentage(totals.calories, goals.calories);
 
-function CalorieArc({ consumed, goal }) {
-  const pct = Math.min((consumed / goal) * 100, 100);
-  const r = 80;
-  const circ = Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-  const remaining = Math.max(goal - consumed, 0);
-  const over = consumed > goal;
+  const macros = [
+    { key: 'protein', label: 'Білки', icon: '🥩', color: '#4A7C59', paleBg: '#D4EAD9', goal: goals.protein, unit: 'г' },
+    { key: 'fat', label: 'Жири', icon: '🫒', color: '#C2783C', paleBg: '#F5E6D8', goal: goals.fat, unit: 'г' },
+    { key: 'carbs', label: 'Вуглеводи', icon: '🌾', color: '#3B6B8A', paleBg: '#D0E4EF', goal: goals.carbs, unit: 'г' },
+  ];
+
+  const toggleMeal = (mealId) => setOpenMeals(prev => ({ ...prev, [mealId]: !prev[mealId] }));
 
   return (
-    <div className="calorie-arc-wrap">
-      <svg width="220" height="130" viewBox="0 0 220 130">
-        <path
-          d="M 20 120 A 90 90 0 0 1 200 120"
-          fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="14" strokeLinecap="round"
-        />
-        <path
-          d="M 20 120 A 90 90 0 0 1 200 120"
-          fill="none"
-          stroke={over ? '#FF6B6B' : '#C8FF00'}
-          strokeWidth="14"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-        />
-      </svg>
-      <div className="calorie-arc-text">
-        <div className="calorie-number">{consumed}</div>
-        <div className="calorie-label">ккал з'їдено</div>
-        <div className={`calorie-remaining ${over ? 'over' : ''}`}>
-          {over ? `+${consumed - goal} зайвих` : `${remaining} залишилось`}
+    <div className="page">
+      <div className="page-header">
+        <h1 className="page-title">Харчовий щоденник</h1>
+        <p className="page-subtitle">{formatDateFull(todayKey)} · {todayEntries.length} записів</p>
+      </div>
+
+      {/* Top row: calories + macros */}
+      <div className="dashboard-grid">
+        <div className="calorie-card">
+          <div className="calorie-label">Калорії сьогодні</div>
+          <div className="calorie-value">{Math.round(totals.calories)}</div>
+          <div className="calorie-goal-text">
+            Залишилось <span>{remaining} ккал</span> з {goals.calories}
+          </div>
+          <div className="calorie-progress-wrap">
+            <div className="calorie-progress-fill" style={{ width: `${calPct}%` }} />
+          </div>
+        </div>
+
+        {macros.map(m => {
+          const val = totals[m.key];
+          const pct = calcPercentage(val, m.goal);
+          return (
+            <div className="macro-card" key={m.key}>
+              <div className="macro-icon" style={{ background: m.paleBg }}>{m.icon}</div>
+              <div className="macro-label">{m.label}</div>
+              <div className="macro-value" style={{ color: m.color }}>{Math.round(val)}<span style={{ fontSize: '1rem', fontWeight: 400 }}>{m.unit}</span></div>
+              <div className="macro-bar">
+                <div className="macro-bar-fill" style={{ width: `${pct}%`, background: m.color }} />
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--ink-faint)', marginTop: 6 }}>
+                {pct}% від {m.goal}{m.unit}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom: meals list + right col */}
+      <div className="dashboard-bottom">
+        <div className="meals-card">
+          <div className="meals-header">
+            <span className="card-title" style={{ marginBottom: 0 }}>Прийоми їжі</span>
+            <span style={{ fontSize: '0.82rem', color: 'var(--ink-faint)' }}>{Math.round(totals.calories)} ккал</span>
+          </div>
+
+          {MEALS.map(meal => {
+            const mealEntries = todayEntries.filter(e => e.meal === meal.id);
+            const mealTotals = calcMealTotals(todayEntries, meal.id);
+            const isOpen = openMeals[meal.id];
+
+            return (
+              <div className="meal-section" key={meal.id}>
+                <div className="meal-section-header" onClick={() => toggleMeal(meal.id)}>
+                  <div className="meal-section-left">
+                    <div className="meal-icon">{meal.icon}</div>
+                    <div>
+                      <div className="meal-name">{meal.label}</div>
+                      <div className="meal-kcal">{Math.round(mealTotals.calories)} ккал · {mealEntries.length} продуктів</div>
+                    </div>
+                  </div>
+                  {isOpen ? <ChevronUp size={16} color="var(--ink-faint)" /> : <ChevronDown size={16} color="var(--ink-faint)" />}
+                </div>
+
+                {isOpen && (
+                  <div className="meal-entries">
+                    {mealEntries.length === 0 ? (
+                      <div style={{ padding: '14px 16px', color: 'var(--ink-faint)', fontSize: '0.83rem' }}>
+                        Поки нічого не додано
+                      </div>
+                    ) : (
+                      mealEntries.map(entry => (
+                        <div className="meal-entry-row" key={entry.id}>
+                          <div>
+                            <div className="entry-name">{entry.name}</div>
+                            <div className="entry-meta">
+                              {entry.amount}{entry.unit} · Б: {Math.round(entry.protein)}г · Ж: {Math.round(entry.fat)}г · В: {Math.round(entry.carbs)}г
+                            </div>
+                          </div>
+                          <div className="entry-right">
+                            <div className="entry-kcal">{Math.round(entry.calories)} ккал</div>
+                            <button className="entry-delete" onClick={() => removeEntry(todayKey, entry.id)}>
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {todayEntries.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-state-icon">🥗</div>
+              <div className="empty-state-title">Ще нічого не додано</div>
+              <div className="empty-state-text">Перейди в «Додати їжу» щоб розпочати</div>
+            </div>
+          )}
+        </div>
+
+        {/* Right: water + quick stats */}
+        <div className="right-col">
+          <WaterTracker water={water} setWater={setWater} goal={goals.water} />
+
+          <div className="card">
+            <div className="card-title">Підсумок дня</div>
+            {[
+              { label: 'Записів усього', val: `${todayEntries.length} шт` },
+              { label: 'Білки', val: `${Math.round(totals.protein)} г` },
+              { label: 'Жири', val: `${Math.round(totals.fat)} г` },
+              { label: 'Вуглеводи', val: `${Math.round(totals.carbs)} г` },
+              { label: 'Вода', val: `${water * 0.25} л / ${goals.water * 0.25} л` },
+            ].map(({ label, val }) => (
+              <div className="quick-stat" key={label}>
+                <span className="stat-label">{label}</span>
+                <span className="stat-val">{val}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-export default function Dashboard({ totals, goal, meals, water, onUpdateWater }) {
-  const mealTotals = Object.entries(meals).map(([type, items]) => ({
-    type,
-    calories: items.reduce((s, i) => s + i.calories, 0),
-    count: items.length,
-  }));
-
-  const waterGoal = 2500;
-  const waterPct = Math.min((water / waterGoal) * 100, 100);
-
-  return (
-    <div className="dashboard">
-      <section className="calorie-section">
-        <CalorieArc consumed={totals.calories} goal={goal.calories} />
-        <div className="calorie-goal-text">Ціль: {goal.calories} ккал</div>
-      </section>
-
-      <section className="macros-section">
-        <h3 className="section-title">Макронутрієнти</h3>
-        <div className="macro-rings">
-          <MacroRing value={totals.protein} max={goal.protein} color="#FF6B6B" label="Білки" />
-          <MacroRing value={totals.fat} max={goal.fat} color="#FFD93D" label="Жири" />
-          <MacroRing value={totals.carbs} max={goal.carbs} color="#6BCB77" label="Вуглев." />
-        </div>
-      </section>
-
-      <section className="meals-summary">
-        <h3 className="section-title">Прийоми їжі</h3>
-        <div className="meal-cards">
-          {mealTotals.map(({ type, calories, count }) => (
-            <div key={type} className="meal-card-small">
-              <span className="meal-card-icon">{getMealIcon(type)}</span>
-              <span className="meal-card-name">{getMealLabel(type)}</span>
-              <span className="meal-card-cal">{calories} ккал</span>
-              {count > 0 && <span className="meal-card-count">{count} страв</span>}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="water-mini">
-        <div className="water-mini-header">
-          <h3 className="section-title">💧 Вода</h3>
-          <span className="water-mini-amount">{water} / {waterGoal} мл</span>
-        </div>
-        <div className="water-bar-bg">
-          <div className="water-bar-fill" style={{ width: `${waterPct}%` }} />
-        </div>
-        <div className="water-quick-btns">
-          {[150, 250, 500].map(ml => (
-            <button key={ml} className="water-quick-btn" onClick={() => onUpdateWater(Math.min(water + ml, waterGoal))}>
-              +{ml}мл
-            </button>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

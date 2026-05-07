@@ -1,111 +1,112 @@
 import { useState } from 'react';
-import { Save, Target, Flame, Beef, Droplets, Wheat } from 'lucide-react';
+import { Check } from 'lucide-react';
 
-const presets = [
-  { label: 'Схуднення', calories: 1500, protein: 120, fat: 50, carbs: 150, emoji: '🔥' },
-  { label: 'Підтримка', calories: 2000, protein: 100, fat: 65, carbs: 250, emoji: '⚖️' },
-  { label: 'Набір маси', calories: 2800, protein: 160, fat: 90, carbs: 350, emoji: '💪' },
-  { label: 'Спортсменка', calories: 2400, protein: 180, fat: 70, carbs: 280, emoji: '🏋️' },
+const GOAL_FIELDS = [
+  { key: 'calories', label: 'Денна ціль калорій', icon: '🔥', unit: 'ккал', min: 1000, max: 5000, desc: 'Рекомендовано: 1600–2400 ккал для жінок' },
+  { key: 'protein', label: 'Білки', icon: '🥩', unit: 'г', min: 30, max: 300, desc: 'Рекомендовано: 0.8–1.6 г на кг ваги' },
+  { key: 'fat', label: 'Жири', icon: '🫒', unit: 'г', min: 20, max: 200, desc: 'Рекомендовано: 20–35% від калорій' },
+  { key: 'carbs', label: 'Вуглеводи', icon: '🌾', unit: 'г', min: 50, max: 500, desc: 'Рекомендовано: 45–65% від калорій' },
+  { key: 'water', label: 'Вода (склянки по 250 мл)', icon: '💧', unit: 'скл', min: 4, max: 16, desc: 'Рекомендовано: 8 склянок = 2 літри' },
 ];
 
-export default function GoalSettings({ goal, onSave }) {
-  const [form, setForm] = useState(goal);
-  const [saved, setSaved] = useState(false);
+const PRESETS = [
+  { label: 'Схуднення', calories: 1500, protein: 110, fat: 50, carbs: 150, water: 8 },
+  { label: 'Підтримка', calories: 2000, protein: 90, fat: 65, carbs: 250, water: 8 },
+  { label: 'Набір маси', calories: 2600, protein: 140, fat: 85, carbs: 320, water: 10 },
+  { label: 'Спортсменка', calories: 2200, protein: 160, fat: 70, carbs: 240, water: 12 },
+];
+
+export default function GoalSettings({ goals, setGoals, showToast }) {
+  const [local, setLocal] = useState({ ...goals });
 
   const handleSave = () => {
-    onSave(form);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setGoals(local);
+    showToast('✓ Цілі збережено', 'success');
   };
 
   const applyPreset = (preset) => {
-    const { label, emoji, ...values } = preset;
-    setForm(values);
+    const next = { ...local, ...preset };
+    delete next.label;
+    setLocal(next);
   };
 
-  const fields = [
-    { key: 'calories', label: 'Калорії', unit: 'ккал', icon: Flame, color: '#C8FF00', min: 800, max: 5000 },
-    { key: 'protein', label: 'Білки', unit: 'г', icon: Beef, color: '#FF6B6B', min: 30, max: 300 },
-    { key: 'fat', label: 'Жири', unit: 'г', icon: Droplets, color: '#FFD93D', min: 20, max: 200 },
-    { key: 'carbs', label: 'Вуглеводи', unit: 'г', icon: Wheat, color: '#6BCB77', min: 50, max: 600 },
-  ];
-
   return (
-    <div className="goal-settings">
-      <div className="settings-header">
-        <Target size={24} />
-        <h2>Мої цілі</h2>
+    <div className="page">
+      <div className="page-header">
+        <h1 className="page-title">Налаштування цілей</h1>
+        <p className="page-subtitle">Встанови індивідуальні цілі по нутрієнтам</p>
       </div>
 
-      <div className="presets-section">
-        <h3>Готові пресети</h3>
-        <div className="presets-grid">
-          {presets.map(preset => (
-            <button key={preset.label} className="preset-btn" onClick={() => applyPreset(preset)}>
-              <span className="preset-emoji">{preset.emoji}</span>
-              <span className="preset-label">{preset.label}</span>
-              <span className="preset-cal">{preset.calories} ккал</span>
+      {/* Presets */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card-title">Швидкі пресети</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {PRESETS.map(preset => (
+            <button
+              key={preset.label}
+              className="btn-secondary"
+              onClick={() => applyPreset(preset)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              {preset.label}
+              <span style={{ fontSize: '0.75rem', color: 'var(--ink-faint)' }}>{preset.calories} ккал</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="fields-section">
-        <h3>Налаштувати вручну</h3>
-        {fields.map(({ key, label, unit, icon: Icon, color, min, max }) => (
-          <div key={key} className="field-row">
-            <div className="field-label">
-              <Icon size={18} style={{ color }} />
-              <span>{label}</span>
-            </div>
-            <div className="field-input-wrap">
-              <input
-                type="range"
-                min={min}
-                max={max}
-                step={key === 'calories' ? 50 : 5}
-                value={form[key]}
-                onChange={e => setForm(p => ({ ...p, [key]: Number(e.target.value) }))}
-                style={{ '--thumb-color': color }}
-              />
-              <div className="field-value-wrap">
-                <input
-                  type="number"
-                  value={form[key]}
-                  onChange={e => setForm(p => ({ ...p, [key]: Number(e.target.value) }))}
-                  min={min}
-                  max={max}
-                />
-                <span className="field-unit">{unit}</span>
+      <div className="goals-layout">
+        <div className="card">
+          <div className="card-title">Мої цілі</div>
+          {GOAL_FIELDS.map(({ key, label, icon, unit, desc }) => (
+            <div key={key}>
+              <div className="goal-row">
+                <div className="goal-icon" style={{ background: 'var(--cream-dark)' }}>{icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div className="goal-label">{label}</div>
+                  <input
+                    className="goal-input"
+                    type="number"
+                    value={local[key]}
+                    onChange={e => setLocal(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                  />
+                </div>
+                <div className="goal-unit">{unit}</div>
               </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--ink-faint)', marginBottom: 8, marginLeft: 4 }}>{desc}</p>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
 
-      <div className="bju-preview">
-        <h3>Розподіл калорій</h3>
-        <div className="bju-bar">
-          {[
-            { label: 'Б', value: form.protein * 4, color: '#FF6B6B' },
-            { label: 'Ж', value: form.fat * 9, color: '#FFD93D' },
-            { label: 'В', value: form.carbs * 4, color: '#6BCB77' },
-          ].map(({ label, value, color }) => {
-            const total = form.protein * 4 + form.fat * 9 + form.carbs * 4;
-            const pct = Math.round((value / total) * 100);
-            return (
-              <div key={label} className="bju-segment" style={{ width: `${pct}%`, background: color }}>
-                <span>{label} {pct}%</span>
+          <button className="btn-primary" style={{ marginTop: 8 }} onClick={handleSave}>
+            <Check size={16} style={{ display: 'inline', marginRight: 6 }} />
+            Зберегти цілі
+          </button>
+        </div>
+
+        {/* Info panel */}
+        <div>
+          <div className="card">
+            <div className="card-title">Поточні цілі</div>
+            {GOAL_FIELDS.map(({ key, label, icon, unit }) => (
+              <div className="quick-stat" key={key}>
+                <span className="stat-label">{icon} {label}</span>
+                <span className="stat-val">{goals[key]} {unit}</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          <div className="card" style={{ marginTop: 16 }}>
+            <div className="card-title">💡 Поради</div>
+            <ul style={{ listStyle: 'none', fontSize: '0.83rem', color: 'var(--ink-mid)', lineHeight: 1.8 }}>
+              <li>• Вживай білок рівномірно протягом дня</li>
+              <li>• Не менше 1.5–2 л води щодня</li>
+              <li>• Зменшення на 500 ккал = -0.5 кг на тиждень</li>
+              <li>• Складні вуглеводи дають довгу енергію</li>
+              <li>• Здорові жири важливі для гормонів</li>
+            </ul>
+          </div>
         </div>
       </div>
-
-      <button className={`save-btn ${saved ? 'saved' : ''}`} onClick={handleSave}>
-        <Save size={18} />
-        {saved ? '✓ Збережено!' : 'Зберегти ціль'}
-      </button>
     </div>
   );
 }
