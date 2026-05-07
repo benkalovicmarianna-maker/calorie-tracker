@@ -1,122 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useCallback } from 'react';
+import Navigation from './components/Navigation';
+import Dashboard from './components/Dashboard';
+import FoodLog from './components/FoodLog';
+import Stats from './components/Stats';
+import GoalSettings from './components/GoalSettings';
+import ToastContainer from './components/Toast';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { getTodayKey } from './utils/helpers';
 
-function App() {
-  const [count, setCount] = useState(0)
+const DEFAULT_GOALS = {
+  calories: 2000,
+  protein: 120,
+  fat: 65,
+  carbs: 250,
+  water: 8,
+};
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [entries, setEntries] = useLocalStorage('nutritrack-entries', {});
+  const [goals, setGoals] = useLocalStorage('nutritrack-goals', DEFAULT_GOALS);
+  const [water, setWater] = useLocalStorage('nutritrack-water-' + getTodayKey(), 0);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = '') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const addEntry = useCallback((dateKey, entry) => {
+    setEntries(prev => ({
+      ...prev,
+      [dateKey]: [...(prev[dateKey] || []), entry],
+    }));
+  }, [setEntries]);
+
+  const removeEntry = useCallback((dateKey, entryId) => {
+    setEntries(prev => ({
+      ...prev,
+      [dateKey]: (prev[dateKey] || []).filter(e => e.id !== entryId),
+    }));
+    showToast('Запис видалено');
+  }, [setEntries, showToast]);
+
+  const pages = {
+    dashboard: <Dashboard entries={entries} goals={goals} water={water} setWater={setWater} removeEntry={removeEntry} />,
+    'food-log': <FoodLog addEntry={addEntry} showToast={showToast} />,
+    stats: <Stats entries={entries} goals={goals} />,
+    goals: <GoalSettings goals={goals} setGoals={setGoals} showToast={showToast} />,
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <div className="app-wrapper">
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <main className="main-content">
+        {pages[activeTab]}
+      </main>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+    </div>
+  );
 }
-
-export default App
