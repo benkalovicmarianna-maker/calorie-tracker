@@ -1,122 +1,125 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { getTodayKey, getLast7Days } from './utils/helpers';
+import Dashboard from './components/Dashboard';
+import FoodLog from './components/FoodLog';
+import WeeklyChart from './components/WeeklyChart';
+import WaterTracker from './components/WaterTracker';
+import GoalSettings from './components/GoalSettings';
+import Navigation from './components/Navigation';
+import './index.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const defaultGoal = { calories: 2000, protein: 120, fat: 65, carbs: 250 };
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [goal, setGoal] = useLocalStorage('nutritrack-goal', defaultGoal);
+  const [allDays, setAllDays] = useLocalStorage('nutritrack-days', {});
+  const [waterData, setWaterData] = useLocalStorage('nutritrack-water', {});
+
+  const todayKey = getTodayKey();
+  const todayMeals = allDays[todayKey] || { breakfast: [], lunch: [], dinner: [], snack: [] };
+  const todayWater = waterData[todayKey] || 0;
+
+  const updateTodayMeals = (meals) => {
+    setAllDays(prev => ({ ...prev, [todayKey]: meals }));
+  };
+
+  const updateTodayWater = (amount) => {
+    setWaterData(prev => ({ ...prev, [todayKey]: amount }));
+  };
+
+  const addFood = (meal, foodItem, grams) => {
+    const multiplier = grams / 100;
+    const entry = {
+      id: Date.now(),
+      name: foodItem.name,
+      emoji: foodItem.emoji,
+      grams,
+      calories: Math.round(foodItem.calories * multiplier),
+      protein: Math.round(foodItem.protein * multiplier * 10) / 10,
+      fat: Math.round(foodItem.fat * multiplier * 10) / 10,
+      carbs: Math.round(foodItem.carbs * multiplier * 10) / 10,
+    };
+    const updated = {
+      ...todayMeals,
+      [meal]: [...(todayMeals[meal] || []), entry],
+    };
+    updateTodayMeals(updated);
+  };
+
+  const removeFood = (meal, id) => {
+    const updated = {
+      ...todayMeals,
+      [meal]: todayMeals[meal].filter(item => item.id !== id),
+    };
+    updateTodayMeals(updated);
+  };
+
+  const getTotals = (meals) => {
+    const all = Object.values(meals).flat();
+    return {
+      calories: all.reduce((s, i) => s + i.calories, 0),
+      protein: Math.round(all.reduce((s, i) => s + i.protein, 0) * 10) / 10,
+      fat: Math.round(all.reduce((s, i) => s + i.fat, 0) * 10) / 10,
+      carbs: Math.round(all.reduce((s, i) => s + i.carbs, 0) * 10) / 10,
+    };
+  };
+
+  const weekData = getLast7Days().map(day => {
+    const meals = allDays[day.key] || { breakfast: [], lunch: [], dinner: [], snack: [] };
+    return {
+      ...day,
+      ...getTotals(meals),
+      water: waterData[day.key] || 0,
+    };
+  });
+
+  const todayTotals = getTotals(todayMeals);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      <header className="app-header">
+        <div className="header-content">
+          <div className="logo">
+            <span className="logo-icon">✦</span>
+            <span className="logo-text">NutriTrack</span>
+          </div>
+          <div className="header-date">
+            {new Date().toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="app-main">
+        {activeTab === 'dashboard' && (
+          <Dashboard
+            totals={todayTotals}
+            goal={goal}
+            meals={todayMeals}
+            water={todayWater}
+            onUpdateWater={updateTodayWater}
+          />
+        )}
+        {activeTab === 'log' && (
+          <FoodLog
+            meals={todayMeals}
+            onAddFood={addFood}
+            onRemoveFood={removeFood}
+          />
+        )}
+        {activeTab === 'chart' && (
+          <WeeklyChart weekData={weekData} goal={goal} />
+        )}
+        {activeTab === 'water' && (
+          <WaterTracker water={todayWater} onUpdate={updateTodayWater} />
+        )}
+        {activeTab === 'settings' && (
+          <GoalSettings goal={goal} onSave={setGoal} />
+        )}
+      </main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
+  );
 }
-
-export default App
