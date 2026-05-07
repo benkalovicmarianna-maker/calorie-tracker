@@ -39,7 +39,7 @@ npm run build
 npm run preview
 ```
 
-Після запуску відкрий [http://localhost:5173](http://localhost:5173)
+Після запуску відкрий [http://localhost:5174](http://localhost:5174)
 
 ## 📁 Структура проєкту
 
@@ -67,8 +67,3 @@ calorie-tracker/
 ├── package.json
 └── vite.config.js
 ```
-
-## 👩‍💻 Автор
-
-Лабораторна робота з курсу «Управління ІТ-проєктами»  
-НУЛП, ІКНІ, САП, ПП-32

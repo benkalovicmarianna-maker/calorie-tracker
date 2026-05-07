@@ -1,125 +1,66 @@
-import { useState } from 'react';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { getTodayKey, getLast7Days } from './utils/helpers';
+import { useState, useCallback } from 'react';
+import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import FoodLog from './components/FoodLog';
-import WeeklyChart from './components/WeeklyChart';
-import WaterTracker from './components/WaterTracker';
+import Stats from './components/Stats';
 import GoalSettings from './components/GoalSettings';
-import Navigation from './components/Navigation';
-import './index.css';
+import ToastContainer from './components/Toast';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { getTodayKey } from './utils/helpers';
 
-const defaultGoal = { calories: 2000, protein: 120, fat: 65, carbs: 250 };
+const DEFAULT_GOALS = {
+  calories: 2000,
+  protein: 120,
+  fat: 65,
+  carbs: 250,
+  water: 8,
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [goal, setGoal] = useLocalStorage('nutritrack-goal', defaultGoal);
-  const [allDays, setAllDays] = useLocalStorage('nutritrack-days', {});
-  const [waterData, setWaterData] = useLocalStorage('nutritrack-water', {});
+  const [entries, setEntries] = useLocalStorage('nutritrack-entries', {});
+  const [goals, setGoals] = useLocalStorage('nutritrack-goals', DEFAULT_GOALS);
+  const [water, setWater] = useLocalStorage('nutritrack-water-' + getTodayKey(), 0);
+  const [toasts, setToasts] = useState([]);
 
-  const todayKey = getTodayKey();
-  const todayMeals = allDays[todayKey] || { breakfast: [], lunch: [], dinner: [], snack: [] };
-  const todayWater = waterData[todayKey] || 0;
+  const showToast = useCallback((message, type = '') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+  }, []);
 
-  const updateTodayMeals = (meals) => {
-    setAllDays(prev => ({ ...prev, [todayKey]: meals }));
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const addEntry = useCallback((dateKey, entry) => {
+    setEntries(prev => ({
+      ...prev,
+      [dateKey]: [...(prev[dateKey] || []), entry],
+    }));
+  }, [setEntries]);
+
+  const removeEntry = useCallback((dateKey, entryId) => {
+    setEntries(prev => ({
+      ...prev,
+      [dateKey]: (prev[dateKey] || []).filter(e => e.id !== entryId),
+    }));
+    showToast('Запис видалено');
+  }, [setEntries, showToast]);
+
+  const pages = {
+    dashboard: <Dashboard entries={entries} goals={goals} water={water} setWater={setWater} removeEntry={removeEntry} />,
+    'food-log': <FoodLog addEntry={addEntry} showToast={showToast} />,
+    stats: <Stats entries={entries} goals={goals} />,
+    goals: <GoalSettings goals={goals} setGoals={setGoals} showToast={showToast} />,
   };
-
-  const updateTodayWater = (amount) => {
-    setWaterData(prev => ({ ...prev, [todayKey]: amount }));
-  };
-
-  const addFood = (meal, foodItem, grams) => {
-    const multiplier = grams / 100;
-    const entry = {
-      id: Date.now(),
-      name: foodItem.name,
-      emoji: foodItem.emoji,
-      grams,
-      calories: Math.round(foodItem.calories * multiplier),
-      protein: Math.round(foodItem.protein * multiplier * 10) / 10,
-      fat: Math.round(foodItem.fat * multiplier * 10) / 10,
-      carbs: Math.round(foodItem.carbs * multiplier * 10) / 10,
-    };
-    const updated = {
-      ...todayMeals,
-      [meal]: [...(todayMeals[meal] || []), entry],
-    };
-    updateTodayMeals(updated);
-  };
-
-  const removeFood = (meal, id) => {
-    const updated = {
-      ...todayMeals,
-      [meal]: todayMeals[meal].filter(item => item.id !== id),
-    };
-    updateTodayMeals(updated);
-  };
-
-  const getTotals = (meals) => {
-    const all = Object.values(meals).flat();
-    return {
-      calories: all.reduce((s, i) => s + i.calories, 0),
-      protein: Math.round(all.reduce((s, i) => s + i.protein, 0) * 10) / 10,
-      fat: Math.round(all.reduce((s, i) => s + i.fat, 0) * 10) / 10,
-      carbs: Math.round(all.reduce((s, i) => s + i.carbs, 0) * 10) / 10,
-    };
-  };
-
-  const weekData = getLast7Days().map(day => {
-    const meals = allDays[day.key] || { breakfast: [], lunch: [], dinner: [], snack: [] };
-    return {
-      ...day,
-      ...getTotals(meals),
-      water: waterData[day.key] || 0,
-    };
-  });
-
-  const todayTotals = getTotals(todayMeals);
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="header-content">
-          <div className="logo">
-            <span className="logo-icon">✦</span>
-            <span className="logo-text">NutriTrack</span>
-          </div>
-          <div className="header-date">
-            {new Date().toLocaleDateString('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </div>
-        </div>
-      </header>
-
-      <main className="app-main">
-        {activeTab === 'dashboard' && (
-          <Dashboard
-            totals={todayTotals}
-            goal={goal}
-            meals={todayMeals}
-            water={todayWater}
-            onUpdateWater={updateTodayWater}
-          />
-        )}
-        {activeTab === 'log' && (
-          <FoodLog
-            meals={todayMeals}
-            onAddFood={addFood}
-            onRemoveFood={removeFood}
-          />
-        )}
-        {activeTab === 'chart' && (
-          <WeeklyChart weekData={weekData} goal={goal} />
-        )}
-        {activeTab === 'water' && (
-          <WaterTracker water={todayWater} onUpdate={updateTodayWater} />
-        )}
-        {activeTab === 'settings' && (
-          <GoalSettings goal={goal} onSave={setGoal} />
-        )}
+    <div className="app-wrapper">
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <main className="main-content">
+        {pages[activeTab]}
       </main>
-
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 }

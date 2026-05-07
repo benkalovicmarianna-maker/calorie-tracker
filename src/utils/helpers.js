@@ -1,48 +1,52 @@
-export const getTodayKey = () => new Date().toISOString().split('T')[0];
+import { format, subDays, startOfDay, parseISO } from 'date-fns';
+import { uk } from 'date-fns/locale';
 
-export const getDateKey = (date) => date.toISOString().split('T')[0];
+export const getTodayKey = () => format(new Date(), 'yyyy-MM-dd');
+
+export const formatDate = (dateStr) => {
+  try {
+    const date = parseISO(dateStr);
+    return format(date, 'd MMM', { locale: uk });
+  } catch {
+    return dateStr;
+  }
+};
+
+export const formatDateFull = (dateStr) => {
+  try {
+    const date = parseISO(dateStr);
+    return format(date, 'EEEE, d MMMM', { locale: uk });
+  } catch {
+    return dateStr;
+  }
+};
 
 export const getLast7Days = () => {
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    days.push({
-      key: getDateKey(d),
-      label: d.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric' }),
-      short: d.toLocaleDateString('uk-UA', { weekday: 'short' }),
-    });
-  }
-  return days;
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(new Date(), 6 - i);
+    return format(date, 'yyyy-MM-dd');
+  });
 };
 
-export const formatCalories = (cal) => Math.round(cal);
-
-export const getMacroColor = (macro) => {
-  const colors = {
-    protein: '#FF6B6B',
-    fat: '#FFD93D',
-    carbs: '#6BCB77',
-  };
-  return colors[macro] || '#ccc';
+export const calcDayTotals = (entries = []) => {
+  return entries.reduce(
+    (acc, entry) => ({
+      calories: acc.calories + (entry.calories || 0),
+      protein: acc.protein + (entry.protein || 0),
+      fat: acc.fat + (entry.fat || 0),
+      carbs: acc.carbs + (entry.carbs || 0),
+    }),
+    { calories: 0, protein: 0, fat: 0, carbs: 0 }
+  );
 };
 
-export const getMealIcon = (meal) => {
-  const icons = {
-    breakfast: '🌅',
-    lunch: '☀️',
-    dinner: '🌙',
-    snack: '🍎',
-  };
-  return icons[meal] || '🍽️';
+export const calcMealTotals = (entries = [], mealId) => {
+  return calcDayTotals(entries.filter(e => e.meal === mealId));
 };
 
-export const getMealLabel = (meal) => {
-  const labels = {
-    breakfast: 'Сніданок',
-    lunch: 'Обід',
-    dinner: 'Вечеря',
-    snack: 'Перекус',
-  };
-  return labels[meal] || meal;
+export const calcPercentage = (value, goal) => {
+  if (!goal || goal <= 0) return 0;
+  return Math.min(100, Math.round((value / goal) * 100));
 };
+
+export const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
