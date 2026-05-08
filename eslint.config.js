@@ -4,6 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
+  js.configs.recommended,
   {
     ignores: [
       'dist/**',
@@ -12,20 +13,24 @@ export default [
       'cypress/**',
       'playwright.config.js',
       'cypress.config.js',
+      '**/__tests__/**',
     ],
   },
   {
     files: ['src/**/*.{js,jsx}'],
     languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
       parserOptions: {
-        ecmaVersion: 'latest',
-        ecmaFeatures: { jsx: true },
-        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'cypress/**'],
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
@@ -33,10 +38,8 @@ export default [
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': 'warn',
-      'no-unused-vars': 'warn',
-      'no-unused-vars': 'off',     // вимикаємо перевірку невикористаних змінних
-      'no-undef': 'off',           // вимикаємо перевірку невизначених змінних
-      
+      'no-unused-vars': 'off',
+      'no-undef': 'off',
     },
   },
 ];
