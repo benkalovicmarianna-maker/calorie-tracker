@@ -1,3 +1,4 @@
+[![CI/CD Pipeline](https://github.com/benkalovicmarianna-maker/calorie-tracker/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/benkalovicmarianna-maker/calorie-tracker/actions/workflows/ci-cd.yml)
 # NutriTrack — Харчовий щоденник калорій та нутрієнтів
 
 Веб-застосунок для відстеження калорій, макронутрієнтів та водного балансу.
