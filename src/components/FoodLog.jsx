@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useMemo } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { FOOD_DATABASE, FOOD_CATEGORIES, MEALS } from '../data/foodDatabase';

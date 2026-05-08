@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+
 export default function WaterTracker({ water, setWater, goal = 8 }) {
   const glasses = Array.from({ length: goal }, (_, i) => i < water);
 

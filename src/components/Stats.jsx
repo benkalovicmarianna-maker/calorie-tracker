@@ -3,9 +3,20 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { getLast7Days, formatDate, calcDayTotals } from '../utils/helpers';
-
+import React from 'react';
 const COLORS = ['#4A7C59', '#C2783C', '#3B6B8A'];
-
+ 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="custom-tooltip">
+        <strong>{label}</strong>
+        <div>{`${payload[0].name}: ${payload[0].value} ккал`}</div>
+      </div>
+    );
+  }
+  return null;
+};
 export default function Stats({ entries, goals }) {
   const days = getLast7Days();
 
@@ -33,19 +44,6 @@ export default function Stats({ entries, goals }) {
     { name: 'Вуглеводи', value: Math.round(todayTotals.carbs * 4) },
   ].filter(d => d.value > 0);
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div style={{ background: 'var(--warm-white)', border: '1px solid var(--sand)', borderRadius: 10, padding: '10px 14px', boxShadow: 'var(--shadow)' }}>
-          <p style={{ fontSize: '0.82rem', fontWeight: 600, marginBottom: 4 }}>{label}</p>
-          {payload.map(p => (
-            <p key={p.dataKey} style={{ fontSize: '0.8rem', color: p.color }}>{p.name}: {p.value}</p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="page">

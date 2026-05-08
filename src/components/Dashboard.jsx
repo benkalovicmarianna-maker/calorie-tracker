@@ -1,7 +1,8 @@
-import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import React from 'react';
 import { useState } from 'react';
 import { MEALS } from '../data/foodDatabase';
-import { calcDayTotals, calcMealTotals, calcPercentage, formatDateFull, getTodayKey } from '../utils/helpers';
+import { calcDayTotals, calcPercentage, formatDateFull, getTodayKey } from '../utils/helpers';
+import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import WaterTracker from './WaterTracker';
 
 export default function Dashboard({ entries, goals, water, setWater, removeEntry }) {
@@ -69,22 +70,23 @@ export default function Dashboard({ entries, goals, water, setWater, removeEntry
           </div>
 
           {MEALS.map(meal => {
-            const mealEntries = todayEntries.filter(e => e.meal === meal.id);
-            const mealTotals = calcMealTotals(todayEntries, meal.id);
-            const isOpen = openMeals[meal.id];
+  const mealEntries = todayEntries.filter(e => e.meal === meal.id);
+  const mealCalories = mealEntries.reduce((sum, e) => sum + e.calories, 0);
+  const isOpen = openMeals[meal.id];
 
-            return (
-              <div className="meal-section" key={meal.id}>
-                <div className="meal-section-header" onClick={() => toggleMeal(meal.id)}>
-                  <div className="meal-section-left">
-                    <div className="meal-icon">{meal.icon}</div>
-                    <div>
-                      <div className="meal-name">{meal.label}</div>
-                      <div className="meal-kcal">{Math.round(mealTotals.calories)} ккал · {mealEntries.length} продуктів</div>
-                    </div>
-                  </div>
-                  {isOpen ? <ChevronUp size={16} color="var(--ink-faint)" /> : <ChevronDown size={16} color="var(--ink-faint)" />}
-                </div>
+  return (
+    <div className="meal-section" key={meal.id}>
+      <div className="meal-section-header" onClick={() => toggleMeal(meal.id)}>
+        <div className="meal-section-left">
+          <div className="meal-icon">{meal.icon}</div>
+          <div>
+            <div className="meal-name">{meal.label}</div>
+            <div className="meal-kcal">{Math.round(mealCalories)} ккал · {mealEntries.length} продуктів</div>
+          </div>
+        </div>
+        {isOpen ? <ChevronUp size={16} color="var(--ink-faint)" /> : <ChevronDown size={16} color="var(--ink-faint)" />}
+      </div>
+      {/* ... решта коду ... */}
 
                 {isOpen && (
                   <div className="meal-entries">

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Check } from 'lucide-react';
-
+import { Edit2, Check } from 'lucide-react';
 const GOAL_FIELDS = [
   { key: 'calories', label: 'Денна ціль калорій', icon: '🔥', unit: 'ккал', min: 1000, max: 5000, desc: 'Рекомендовано: 1600–2400 ккал для жінок' },
   { key: 'protein', label: 'Білки', icon: '🥩', unit: 'г', min: 30, max: 300, desc: 'Рекомендовано: 0.8–1.6 г на кг ваги' },

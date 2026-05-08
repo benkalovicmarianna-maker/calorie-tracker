@@ -1,7 +1,8 @@
-import { Leaf, LayoutDashboard, PlusCircle, BarChart2, Settings } from 'lucide-react';
+
 import { format } from 'date-fns';
 import { uk } from 'date-fns/locale';
-
+import React from 'react';
+import { LayoutDashboard, PlusCircle, BarChart2, Settings, Leaf } from 'lucide-react';
 const navItems = [
   { id: 'dashboard', label: 'Огляд', icon: LayoutDashboard },
   { id: 'food-log', label: 'Додати їжу', icon: PlusCircle },
@@ -20,16 +21,16 @@ export default function Navigation({ activeTab, setActiveTab }) {
       </div>
 
       <nav className="sidebar-nav">
-        {navItems.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            className={`nav-btn${activeTab === id ? ' active' : ''}`}
-            onClick={() => setActiveTab(id)}
-          >
-            <Icon size={18} />
-            {label}
-          </button>
-        ))}
+      {navItems.map(({ id, label, icon: Icon }) => (
+ <button
+ key={id}
+ className={`nav-btn${activeTab === id ? ' active' : ''}`}
+ onClick={() => setActiveTab(id)}
+>
+ <Icon size={18} />
+ {label}
+</button>
+))}
       </nav>
 
       <div className="sidebar-date">

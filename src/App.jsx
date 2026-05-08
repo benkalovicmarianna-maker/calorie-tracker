@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import FoodLog from './components/FoodLog';
@@ -7,7 +7,6 @@ import GoalSettings from './components/GoalSettings';
 import ToastContainer from './components/Toast';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { getTodayKey } from './utils/helpers';
-
 const DEFAULT_GOALS = {
   calories: 2000,
   protein: 120,
@@ -61,6 +60,16 @@ export default function App() {
         {pages[activeTab]}
       </main>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-    </div>
+<footer style={{
+  textAlign: 'center',
+  padding: '15px',
+  marginTop: '20px',
+  borderTop: '1px solid #e0e0e0',
+  fontSize: '12px',
+  color: import.meta.env.VITE_APP_STATUS === 'PRODUCTION' ? '#22c55e' : '#f59e0b'
+}}>
+  📱 Calorie Tracker | Режим: <strong>{import.meta.env.VITE_APP_STATUS}</strong>
+</footer>
+  </div>
   );
 }
