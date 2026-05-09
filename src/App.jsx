@@ -8,6 +8,7 @@ import ToastContainer from './components/Toast';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { getTodayKey } from './utils/helpers';
 import posthog from 'posthog-js';
+import * as Sentry from "@sentry/react";
 const DEFAULT_GOALS = {
   calories: 2000,
   protein: 120,
@@ -24,6 +25,33 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [isNewTheme, setIsNewTheme] = useState(false);
 
+   // Генерація або отримання унікального ID користувача
+   const getUserId = () => {
+    let userId = localStorage.getItem('calorie_tracker_user_id');
+    if (!userId) {
+      userId = 'user_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      localStorage.setItem('calorie_tracker_user_id', userId);
+    }
+    return userId;
+  };
+  // Налаштування контексту користувача в Sentry
+  useEffect(() => {
+    const userId = getUserId();
+    const userAgent = navigator.userAgent;
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod/i.test(userAgent);
+    
+    Sentry.setUser({
+      id: userId,
+      segment: isMobile ? 'mobile_user' : 'desktop_user',
+      device_type: isMobile ? 'mobile' : 'desktop',
+    });
+    
+    // Також додаємо теги для кращої фільтрації
+    Sentry.setTag('app_version', '1.0.0');
+    Sentry.setTag('user_type', 'anonymous');
+    
+    console.log('✅ Sentry user context set:', userId);
+  }, []);
   // Перевірка прапорця feature flag - ПРИМУСОВА
   useEffect(() => {
     // Функція для перевірки прапорця
@@ -77,6 +105,13 @@ export default function App() {
       }
     }
   }, [isNewTheme]);
+
+  // Скидання контексту користувача (для тестування)
+const resetUserContext = () => {
+  localStorage.removeItem('calorie_tracker_user_id');
+  Sentry.setUser(null);
+  window.location.reload();
+};
 
   const showToast = useCallback((message, type = '') => {
     const id = Date.now();
@@ -144,6 +179,21 @@ export default function App() {
 }}>
   📱 Calorie Tracker | Режим: <strong>{import.meta.env.VITE_APP_STATUS}</strong>
 </footer>
+   {/* Візуальний індикатор ID користувача */}
+   <div style={{
+      position: 'fixed',
+      bottom: '10px',
+      right: '10px',
+      fontSize: '10px',
+      background: 'rgba(0,0,0,0.5)',
+      color: 'white',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      zIndex: 9999,
+      fontFamily: 'monospace'
+    }}>
+      ID: {localStorage.getItem('calorie_tracker_user_id')?.slice(-8)}
+    </div>
   </div>
-  );
+);
 }

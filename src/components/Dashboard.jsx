@@ -29,6 +29,23 @@ export default function Dashboard({ entries, goals, water, setWater, removeEntry
         <p className="page-subtitle">{formatDateFull(todayKey)} · {todayEntries.length} записів</p>
       </div>
 
+      {/* Тестова кнопка для Sentry */}
+<button 
+  onClick={() => { throw new Error("Sentry Test Error: Something went wrong!"); }}
+  style={{
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    marginBottom: '16px',
+    fontSize: '14px'
+  }}
+>
+  💣 Test Error
+</button>
+
       {/* Top row: calories + macros */}
       <div className="dashboard-grid">
         <div className="calorie-card">
