@@ -23,25 +23,60 @@ export default function App() {
   const [water, setWater] = useLocalStorage('nutritrack-water-' + getTodayKey(), 0);
   const [toasts, setToasts] = useState([]);
   const [isNewTheme, setIsNewTheme] = useState(false);
-  
+
+  // Перевірка прапорця feature flag - ПРИМУСОВА
   useEffect(() => {
-    if (posthog) {
-      // Перевіряємо прапорець
-      const flag = posthog.isFeatureEnabled('new_visual_theme');
-      setIsNewTheme(flag);
-      console.log('Feature flag new_visual_theme:', flag);
-      
-      // Якщо false, але має бути true — примусово завантажуємо флаги
-      if (!flag) {
-        posthog.reloadFeatureFlags();
-        setTimeout(() => {
-          const newFlag = posthog.isFeatureEnabled('new_visual_theme');
-          setIsNewTheme(newFlag);
-          console.log('Reloaded feature flag:', newFlag);
-        }, 500);
+    // Функція для перевірки прапорця
+    const checkFeatureFlag = () => {
+      if (posthog) {
+        try {
+          const flag = posthog.isFeatureEnabled('new_visual_theme');
+          console.log('Feature flag new_visual_theme:', flag);
+          setIsNewTheme(flag);
+          
+          // Додаємо/видаляємо клас напряму для надійності
+          const appWrapper = document.querySelector('.app-wrapper');
+          if (appWrapper) {
+            if (flag) {
+              appWrapper.classList.add('new-theme');
+            } else {
+              appWrapper.classList.remove('new-theme');
+            }
+          }
+        } catch (e) {
+          console.error('Error checking feature flag:', e);
+        }
+      }
+    };
+
+    // Перевіряємо одразу
+    checkFeatureFlag();
+    
+    // Перевіряємо ще раз через 1 секунду
+    const timer = setTimeout(checkFeatureFlag, 1000);
+    
+    // Перевіряємо ще раз через 3 секунди
+    const timer2 = setTimeout(checkFeatureFlag, 3000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+    };
+  }, []);
+
+  // Слідкуємо за зміною isNewTheme і оновлюємо клас
+  useEffect(() => {
+    const appWrapper = document.querySelector('.app-wrapper');
+    if (appWrapper) {
+      if (isNewTheme) {
+        appWrapper.classList.add('new-theme');
+        console.log('✅ New theme applied');
+      } else {
+        appWrapper.classList.remove('new-theme');
+        console.log('❌ New theme removed');
       }
     }
-  }, []);
+  }, [isNewTheme]);
 
   const showToast = useCallback((message, type = '') => {
     const id = Date.now();
