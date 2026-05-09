@@ -7,6 +7,7 @@ import GoalSettings from './components/GoalSettings';
 import ToastContainer from './components/Toast';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { getTodayKey } from './utils/helpers';
+import posthog from 'posthog-js';
 const DEFAULT_GOALS = {
   calories: 2000,
   protein: 120,
@@ -22,6 +23,15 @@ export default function App() {
   const [water, setWater] = useLocalStorage('nutritrack-water-' + getTodayKey(), 0);
   const [toasts, setToasts] = useState([]);
 
+  // Перевірка прапорця
+  useEffect(() => {
+    if (posthog) {
+      const flag = posthog.isFeatureEnabled('new_visual_theme');
+      setIsNewTheme(flag);
+      console.log('Feature flag new_visual_theme:', flag);
+    }
+  }, []);
+
   const showToast = useCallback((message, type = '') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -36,13 +46,31 @@ export default function App() {
       ...prev,
       [dateKey]: [...(prev[dateKey] || []), entry],
     }));
+    // Відправляємо подію в PostHog
+  posthog.capture('food_added', {
+    food_name: entry.name,
+    calories: entry.calories,
+    meal_type: entry.meal,
+    amount: entry.amount,
+    unit: entry.unit,
+  });
   }, [setEntries]);
 
   const removeEntry = useCallback((dateKey, entryId) => {
+    // Знаходимо запис перед видаленням
+  const entry = entries[dateKey]?.find(e => e.id === entryId);
     setEntries(prev => ({
       ...prev,
       [dateKey]: (prev[dateKey] || []).filter(e => e.id !== entryId),
     }));
+    // Відправляємо подію в PostHog
+  if (entry) {
+    posthog.capture('food_removed', {
+      food_name: entry.name,
+      calories: entry.calories,
+      meal_type: entry.meal,
+    });
+  }
     showToast('Запис видалено');
   }, [setEntries, showToast]);
 

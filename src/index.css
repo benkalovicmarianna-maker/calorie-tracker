@@ -840,3 +840,31 @@ body {
   .stats-grid { grid-template-columns: 1fr; }
   .goals-layout { grid-template-columns: 1fr; }
 }
+
+/* Нова візуальна тема */
+.app-wrapper.new-theme {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #ffffff;
+}
+
+.new-theme .card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  color: white;
+}
+
+.new-theme .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.new-theme .sidebar {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.new-theme .calorie-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
