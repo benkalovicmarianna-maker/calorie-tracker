@@ -841,30 +841,55 @@ body {
   .goals-layout { grid-template-columns: 1fr; }
 }
 
-/* Нова візуальна тема */
+/* Нова візуальна тема - яскраві зміни */
 .app-wrapper.new-theme {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
 .new-theme .card {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.6) !important;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.new-theme .page-title,
+.new-theme .page-subtitle {
+  color: #fff !important;
+}
+
+.new-theme .calorie-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   color: white;
 }
 
+.new-theme .macro-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+}
+
 .new-theme .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   border: none;
 }
 
 .new-theme .sidebar {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4) !important;
   backdrop-filter: blur(10px);
 }
 
-.new-theme .calorie-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.new-theme .food-item {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.new-theme .food-item:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.new-theme .water-glass {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.new-theme .water-glass.filled {
+  background: #667eea;
 }
