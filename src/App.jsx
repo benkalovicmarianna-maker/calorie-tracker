@@ -23,13 +23,23 @@ export default function App() {
   const [water, setWater] = useLocalStorage('nutritrack-water-' + getTodayKey(), 0);
   const [toasts, setToasts] = useState([]);
   const [isNewTheme, setIsNewTheme] = useState(false);
-
-  // Перевірка прапорця
+  
   useEffect(() => {
     if (posthog) {
+      // Перевіряємо прапорець
       const flag = posthog.isFeatureEnabled('new_visual_theme');
       setIsNewTheme(flag);
       console.log('Feature flag new_visual_theme:', flag);
+      
+      // Якщо false, але має бути true — примусово завантажуємо флаги
+      if (!flag) {
+        posthog.reloadFeatureFlags();
+        setTimeout(() => {
+          const newFlag = posthog.isFeatureEnabled('new_visual_theme');
+          setIsNewTheme(newFlag);
+          console.log('Reloaded feature flag:', newFlag);
+        }, 500);
+      }
     }
   }, []);
 

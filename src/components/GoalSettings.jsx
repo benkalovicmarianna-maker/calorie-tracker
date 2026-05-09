@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Edit2, Check } from 'lucide-react';
+import posthog from 'posthog-js';
+
 const GOAL_FIELDS = [
   { key: 'calories', label: 'Денна ціль калорій', icon: '🔥', unit: 'ккал', min: 1000, max: 5000, desc: 'Рекомендовано: 1600–2400 ккал для жінок' },
   { key: 'protein', label: 'Білки', icon: '🥩', unit: 'г', min: 30, max: 300, desc: 'Рекомендовано: 0.8–1.6 г на кг ваги' },
@@ -20,6 +22,16 @@ export default function GoalSettings({ goals, setGoals, showToast }) {
 
   const handleSave = () => {
     setGoals(local);
+    
+    // Відправляємо подію в PostHog
+    posthog.capture('goal_updated', {
+      calories: local.calories,
+      protein: local.protein,
+      fat: local.fat,
+      carbs: local.carbs,
+      water: local.water,
+    });
+    
     showToast('✓ Цілі збережено', 'success');
   };
 
@@ -27,6 +39,16 @@ export default function GoalSettings({ goals, setGoals, showToast }) {
     const next = { ...local, ...preset };
     delete next.label;
     setLocal(next);
+    
+    // Відправляємо подію застосування пресету
+    posthog.capture('preset_applied', {
+      preset_name: preset.label,
+      calories: preset.calories,
+      protein: preset.protein,
+      fat: preset.fat,
+      carbs: preset.carbs,
+      water: preset.water,
+    });
   };
 
   return (
