@@ -22,6 +22,7 @@ export default function App() {
   const [goals, setGoals] = useLocalStorage('nutritrack-goals', DEFAULT_GOALS);
   const [water, setWater] = useLocalStorage('nutritrack-water-' + getTodayKey(), 0);
   const [toasts, setToasts] = useState([]);
+  const [isNewTheme, setIsNewTheme] = useState(false);
 
   // Перевірка прапорця
   useEffect(() => {
